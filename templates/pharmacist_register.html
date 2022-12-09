@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>Cure N Care</title>
+  </head>
+  <body>
+    <h2>Pharmacist Registration Form</h2>
+    <form action="{% url 'pharmacist_register' %}" method="POST">
+      {% csrf_token %}
+      {{form.as_p}}
+      <input type="submit" name="" value="Register">
+      </form>
+
+  </body>
+</html>
