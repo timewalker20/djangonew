@@ -27,13 +27,15 @@ User_type={
 }
 
 class User(AbstractUser):
+    email=models.EmailField(unique=True)
     full_name = models.CharField(max_length=300,default="0")
     usertype= models.CharField(max_length=30)
     gender = models.CharField(max_length=10,)
     bloodgroup = models.CharField(max_length=15,)
     phone_no = models.CharField(max_length = 13)
     videocall= models.BooleanField(default=False)
-
+    is_verified = models.BooleanField(default=False)
+    otp = models.CharField(max_length=6,null=True,blank=True)
 
 class Patient(models.Model):
     user = models.OneToOneField(User,on_delete=models.CASCADE,null=True)
@@ -105,7 +107,7 @@ class Pharmacist(models.Model):
      shop_name = models.CharField(max_length=200,blank=False,unique=True)
      shop_address = models.TextField(max_length=400,blank=False)
      phar_name = models.CharField(max_length=200,blank=False)
-     email_pharm = models.EmailField( max_length=254,blank=False)
+     email_pharm = models.EmailField( max_length=254,blank=False,unique=True)
      contact_no = models.CharField(max_length=13,blank=False,unique=True,null=True,default="0")
      pincode = models.CharField(max_length = 10,default="0")
      start_time = models.TimeField(default=0)
@@ -203,6 +205,8 @@ class DocDatashare(models.Model):
     accept= models.BooleanField(default=False)
     time= models.CharField(max_length=50,default="0")
     prescription=models.TextField(null=True)
+    rtc=models.TextField(null=True)
+
 
     
 # Create your models here.

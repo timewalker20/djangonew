@@ -8,6 +8,9 @@ urlpatterns = [
     # path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('api-token-auth/', views.CustomAuthToken.as_view()),
     path('register/',views.RegisterAPI.as_view()),
+    path('verify/',views.verifyOTP.as_view()),
+    path('Forget-Password/',views.ForgetPassword),
+    path('Password-Reset/',views.PasswordReset),
     path('userdetails/',views.profilepack.as_view()),
     path('endcall/',views.endcall),
     #private...profile

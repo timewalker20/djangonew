@@ -13,7 +13,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
     password=serializers.CharField(required=True,write_only=True)
     class Meta:
         model= User
-        fields = ['username','full_name','email', 'password','usertype','gender','bloodgroup','phone_no']
+        fields = ['username','full_name','email', 'password','usertype','gender','bloodgroup','phone_no','is_verified']
         extra_kwargs={
             'password':{'write_only':True},
          }
@@ -32,7 +32,12 @@ class UserRegisterSerializer(serializers.ModelSerializer):
          user.set_password(password)
          user.save()
          return user
-          
+
+class VerifySerializer(serializers.Serializer):
+    email= serializers.EmailField()
+    otp= serializers.CharField()       
+    
+      
 class UserDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model= User

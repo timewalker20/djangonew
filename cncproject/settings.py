@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -25,7 +26,7 @@ STATIC_DIR = BASE_DIR.joinpath('static')
 SECRET_KEY = 'django-insecure-g^o$bvuoz3qos=%#@^$kirat+97#tz36of=u7_fwsbk2$8of6f'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG =  True
 
 ALLOWED_HOSTS = ["*"]
 
@@ -167,3 +168,11 @@ AUTH_USER_MODEL = 'cncapp.User'
 ACCOUNT_UNIQUE_EMAIL=True
 RAZOR_KEY_ID = "rzp_test_8SYblYb1SY5Ixj"
 RAZOR_KEY_SECRET = "s3ekF1bZRISt5IXjXNR6RtJi"
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_USE_TLS = True
+EMAIL_PORT = 587
+EMAIL_HOST_USER ='rbongade01@gmail.com'
+EMAIL_HOST_PASSWORD ='xmetnolekptlpvsk'
+

@@ -5,7 +5,7 @@ from django.shortcuts import render,get_object_or_404
 import razorpay
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.response import Response
-from .serializers import AmbulanceDatashareSerializer, AmbulanceSerializer, DocDatashareSerializer, GETOrderitemserializer, MedSerializer, Orderitemserializer, Orderserializer, PatientAmbDatashareSerializer, PatientDatashareSerializer, PatientSerializer, PatientdocDatashareSerializer,PharmaSerializer, PhramaorderSerializer, ShippingAddressserializer, UserDetailSerializer, UserRegisterSerializer, bookingSerializer, docotorSerializer, driverSerializer, hospitalDatashareSerializer, hospitalSerializer, updocDatashareSerializer
+from .serializers import AmbulanceDatashareSerializer, AmbulanceSerializer, DocDatashareSerializer, GETOrderitemserializer, MedSerializer, Orderitemserializer, Orderserializer, PatientAmbDatashareSerializer, PatientDatashareSerializer, PatientSerializer, PatientdocDatashareSerializer,PharmaSerializer, PhramaorderSerializer, ShippingAddressserializer, UserDetailSerializer, UserRegisterSerializer, VerifySerializer, bookingSerializer, docotorSerializer, driverSerializer, hospitalDatashareSerializer, hospitalSerializer, updocDatashareSerializer
 from .models import Ambulance, AmbulnceDatashare, Booking, Datashare, DocDatashare, Driver, Hospital, Inventory, Order, Orderitem, Patient,Pharmacist,Doctor, ShippingAddress, User
 from rest_framework.response import Response
 from rest_framework import status
@@ -492,8 +492,9 @@ class CustomAuthToken(ObtainAuthToken):
                                            context={'request': request})
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data['user']
-        token, created = Token.objects.get_or_create(user=user)
-        return Response({
+        if User.objects.filter(username=user,is_verified=True).exists():
+         token, created = Token.objects.get_or_create(user=user)
+         return Response({
             'token': token.key,
             'user_id': user.pk,
             'username':user.username,
@@ -503,8 +504,15 @@ class CustomAuthToken(ObtainAuthToken):
             'bloodgroup':user.bloodgroup,
             'gender':user.gender,
             'phone_no':user.phone_no if user.phone_no else '',
-        })
+            'is_verified':user.is_verified
+         })
+        else:
+            return Response({
+                'status':333,
+                'message':'Account Not Verified'
 
+            })
+from .email import *
 # Register API
 class RegisterAPI(generics.GenericAPIView):
     serializer_class = UserRegisterSerializer
@@ -513,9 +521,69 @@ class RegisterAPI(generics.GenericAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
+        send_otp_email(serializer.data['email'])
         return Response({
         "user": UserDetailSerializer(user, context=self.get_serializer_context()).data
         })
+
+
+class verifyOTP(APIView):
+      def post(self,request):
+        try:
+            data= request.data
+            serializer = VerifySerializer(data=data)
+
+            if serializer.is_valid():
+                email= serializer.data['email']
+                otp = serializer.data['otp']
+                user= User.objects.filter(email=email)
+                if not user.exists():
+                    return Response({
+                        'status':400,
+                        'message':'invaild email'
+                    })
+                if  user[0].otp != otp:
+                    return Response({
+                        'status':400,
+                        'message':'wrong otp'
+                     })  
+                user = user.first()
+                user.is_verified =True
+                user.save()
+                return Response({
+                        'status':500,
+                        'message':'verified'
+                     }) 
+            
+        except Exception as e:
+            print(e)
+
+@api_view(['POST'])
+def ForgetPassword(request):
+     email=request.data["email"]
+     if User.objects.filter(email=email).exists():
+        send_otp_password(email)
+        return Response({
+            "message":"OTP Sent"
+        })
+     else:
+        return Response({
+            "message":"Email doesn't exsits"
+        })    
+
+@api_view(['POST'])
+def PasswordReset(request):
+     otp=request.data["otp"]
+     newpassword=request.data['newpassword']
+     if User.objects.filter(otp=otp).exists():
+        User.objects.filter(otp=otp).update(password=newpassword)
+        return Response({
+            "message":" Password Reset Successfuly"
+        })
+     else:
+        return Response({
+            "message":"Wrong OTP "
+        }) 
 
 
 #private--pharma
