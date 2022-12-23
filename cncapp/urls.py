@@ -26,7 +26,9 @@ urlpatterns = [
     #doctor
     path('User-doctorlist/', views.UserdoctorList.as_view()),
     path('User-doctorlist/<int:pk>/', views.UserdoctorDetail.as_view()),
-
+   #pathology
+    path('User-pathologistlist/', views.UserPathologistList.as_view()),
+    path('User-pathologistdetails/<int:pk>/', views.UserPathologistList.as_view()),
     #hospital
     path('User-hosplist/', views.UserhospList.as_view()),
     path('hosp-list/<int:pk>/', views.UserhospDetail.as_view()),
@@ -53,14 +55,20 @@ urlpatterns = [
     path('user-docdatashare/',views.getuserdocdatashare.as_view()),
     path('up-docdatashare/<int:pk>/',views.updateuserdocdatashar.as_view()),
     path('doc-datashare/',views.getdocdatashare.as_view()),
-
     path('booking-pay/', views.start_payment, name="payment"),
     #path('payment/success/', views.handle_payment_success, name="payment_success"),
- 
     path('paymenthandler',views.paymenthandler,),
     path('user-docbook/',views.getuserbooking.as_view()),
     path('doc-docbook/',views.getdocbooking.as_view()),
-    
+    #Pathology
+    path('user-pathdatashare/',views.getuser_pathdatashare.as_view()),
+    path('up-pathdatashare/<int:pk>/',views.updateuser_pathdatashare.as_view()),
+    path('path-datashare/',views.getpath_datashare.as_view()),
+    path('pathbooking-pay/', views.start_payment_Pathology, name="payment"),
+    path('paymenthandler',views.paymenthandler,),
+    path('user-pathbook/',views.getuser_pathbooking.as_view()),
+    path('path-pathbook/',views.getpath_booking.as_view()),
+
     #global data
     path('all-pharmalist/', views.PharmaList.as_view()),
     path('all-pharmalist/<int:pk>/', views.UserpharmaDetail.as_view()),
@@ -72,7 +80,8 @@ urlpatterns = [
     path('all-doctorlist/<int:pk>/', views.doctorDetail.as_view()),
     path('all-ambulist/', views.Ambulancelist.as_view()),
     path('all-ambulist/<int:pk>/', views.Ambulancelist.as_view()),
-    
+    path('all-pathologylist/', views.PathologistList.as_view()),
+    path('all-pathologylist/<int:pk>/', views.PathologistDetail.as_view()),
     path('pharmamed/<int:pk>/',views.GetPharmaMed,),#<str:poll_id>
     path('pharmamed/<int:pk>/<str:pro>',views.GetPharmaMedser,),
   #medicine buy

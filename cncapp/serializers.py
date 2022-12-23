@@ -115,11 +115,31 @@ class updocDatashareSerializer(serializers.ModelSerializer):
          model=DocDatashare
          fields='__all__'
 
-
-
 class bookingSerializer(serializers.ModelSerializer):
      class Meta:
          model=Booking
+         fields='__all__'
+
+#pathology--
+class PatientpathologyDatashareSerializer(serializers.ModelSerializer):
+     user=serializers.HiddenField(default=serializers.CurrentUserDefault())
+     class Meta:
+         model=PathologyDatashare
+         fields='__all__'
+
+class pathDatashareSerializer(serializers.ModelSerializer):
+     class Meta:
+         model=PathologyDatashare
+         fields='__all__'
+
+class uppathDatashareSerializer(serializers.ModelSerializer):
+     class Meta:
+         model=PathologyDatashare
+         fields='__all__'
+
+class PathbookingSerializer(serializers.ModelSerializer):
+     class Meta:
+         model=PathologyBooking
          fields='__all__'
 
 
@@ -173,6 +193,11 @@ class docotorSerializer(serializers.ModelSerializer):
         model = Doctor
         fields = '__all__'
 
+class pathologistSerializer(serializers.ModelSerializer):
+    # user=serializers.HiddenField(default=serializers.CurrentUserDefault())
+    class Meta:
+        model = Pathologist
+        fields = '__all__'
 
 class hospitaldoctorSerializer(serializers.ModelSerializer):
     # user=serializers.HiddenField(default=serializers.CurrentUserDefault())

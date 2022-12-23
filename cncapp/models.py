@@ -71,6 +71,24 @@ class Doctor(models.Model):
     def __str__(self):
         return self.full_name
 
+class Pathologist(models.Model):
+    user = models.OneToOneField(User,on_delete=models.CASCADE,null=True)
+    full_name= models.CharField(max_length=300,default="0")
+    email = models.EmailField(max_length=300,unique=True)
+    desc = models.TextField(max_length=400,blank=False,null=True)
+    services= models.TextField(max_length=400,blank=False,null=True)
+    pathologistimage = models.ImageField(blank=True, upload_to='pathologist_pics',null=True)
+    contactno = models.CharField(max_length=13,default="0",unique=True)
+    address=models.CharField(max_length=200,blank=False,null=True)
+    city = models.CharField(max_length=20,default="0")
+    pincode = models.CharField(max_length = 6,default="0")
+    experience = models.CharField(max_length=20,blank=False)
+    speciality = models.CharField(max_length=20,blank=False)
+    gender = models.CharField(max_length=10,blank=False,default="0")
+    amount= models.FloatField(blank=False,default=0.0,null=True)
+    
+    def __str__(self):
+        return self.full_name
 
 class HospitalDoctor(models.Model):
     doctorname = models.CharField(max_length=100,blank=False)
@@ -153,6 +171,24 @@ class Ambulance(models.Model):
     def __str__(self):
         return self.company
 
+#//////-------- datashare-------////////
+class PathologyDatashare(models.Model):
+    user= models.ForeignKey(User,on_delete=models.CASCADE,null=True,blank=True,unique=False)
+    pathologist= models.ForeignKey(Pathologist, on_delete=models.CASCADE)    
+    full_name = models.CharField(max_length=300,default="0")
+    email = models.EmailField(max_length=300)
+    contactno = models.CharField( max_length=13,default="0")
+    disease = models.TextField(max_length=300,blank=False)
+    aadhaarno = models.CharField(max_length=12,default="0")
+    emergency = models.TextField(max_length=400,blank=False,null=True)
+    gender = models.CharField(max_length=10,blank=False,default='M')
+    bloodgroup = models.CharField(max_length=15,blank=False,default='B+')
+    accept= models.BooleanField(default=False)
+    time= models.CharField(max_length=50,default="0")
+    prescription=models.TextField(null=True)
+    rtc=models.TextField(null=True)
+    complete=models.BooleanField(default=False)
+
 class Datashare(models.Model):
     user= models.ForeignKey(User,on_delete=models.CASCADE,null=True,blank=True,unique=False)
     hospital = models.ForeignKey(Hospital, on_delete=models.CASCADE)    
@@ -166,6 +202,8 @@ class Datashare(models.Model):
     bloodgroup = models.CharField(max_length=15,blank=False,default='B+')
     accept= models.BooleanField(default=False)
     time= models.CharField(max_length=50,default="0")
+    complete=models.BooleanField(default=False)
+
     
     def __str__(self):
         return self.full_name
@@ -186,6 +224,8 @@ class AmbulnceDatashare(models.Model):
     longitude=models.FloatField(blank=False,default=0.0,null=True)
     latitude=models.FloatField(blank=False,default=0,null=True)
     time= models.CharField(max_length=50,default="0")
+    complete=models.BooleanField(default=False)
+
     
 
     def __str__(self):
@@ -206,6 +246,8 @@ class DocDatashare(models.Model):
     time= models.CharField(max_length=50,default="0")
     prescription=models.TextField(null=True)
     rtc=models.TextField(null=True)
+    complete=models.BooleanField(default=False)
+
 
 
     
@@ -220,6 +262,17 @@ class Booking(models.Model):
     isPaid = models.BooleanField(default=False)
     date = models.DateField(default=0)
     start_time = models.TimeField(default=0)
+    
+class PathologyBooking(models.Model):
+    user= models.ForeignKey(User,on_delete=models.CASCADE,null=True,blank=True,unique=False)
+    pathologist= models.ForeignKey(Pathologist,on_delete=models.CASCADE) 
+    accepted= models.BooleanField(default=False) 
+    booking_amount = models.CharField(max_length=25)
+    booking_payment_id = models.CharField(max_length=100)
+    isPaid = models.BooleanField(default=False)
+    date = models.DateField(default=0)
+    start_time = models.TimeField(default=0)
+
 
 
 #ecom

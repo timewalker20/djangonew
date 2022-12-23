@@ -5,8 +5,8 @@ from django.shortcuts import render,get_object_or_404
 import razorpay
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.response import Response
-from .serializers import AmbulanceDatashareSerializer, AmbulanceSerializer, DocDatashareSerializer, GETOrderitemserializer, MedSerializer, Orderitemserializer, Orderserializer, PatientAmbDatashareSerializer, PatientDatashareSerializer, PatientSerializer, PatientdocDatashareSerializer,PharmaSerializer, PhramaorderSerializer, ShippingAddressserializer, UserDetailSerializer, UserRegisterSerializer, VerifySerializer, bookingSerializer, docotorSerializer, driverSerializer, hospitalDatashareSerializer, hospitalSerializer, updocDatashareSerializer
-from .models import Ambulance, AmbulnceDatashare, Booking, Datashare, DocDatashare, Driver, Hospital, Inventory, Order, Orderitem, Patient,Pharmacist,Doctor, ShippingAddress, User
+from .serializers import *
+from .models import *
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.authtoken.models import Token
@@ -435,7 +435,6 @@ class getdocbooking(generics.ListCreateAPIView):
         queryset = Booking.objects.filter(Doctor=data)  
         return  queryset
         
-
 @api_view(['POST'])
 def start_payment(request):
     # request.data is coming from frontend
@@ -459,6 +458,55 @@ def start_payment(request):
                                  )
      order.save()
      serializer =bookingSerializer(order)
+     User.objects.filter(id=user).update(videocall=True)
+     data = {
+        "order": serializer.data,
+        "message":"booking done"
+       }
+     return Response(data)
+    else:
+        return Response({"message":"payment is not successful"})
+###Pathology###
+class getuser_pathbooking(generics.ListCreateAPIView):
+    permission_classes=[IsAuthenticated]
+    authentication_classes = [TokenAuthentication] 
+    serializer_class = PathbookingSerializer
+    def get_queryset(self):
+        queryset = PathologyBooking.objects.filter(user=self.request.user)
+        return  queryset
+
+class getpath_booking(generics.ListCreateAPIView):
+    permission_classes=[IsAuthenticated]
+    authentication_classes = [TokenAuthentication] 
+    serializer_class = PathbookingSerializer
+    def get_queryset(self):
+        data = Pathologist.objects.get(user=self.request.user)
+        queryset = PathologyBooking.objects.filter(Doctor=data)  
+        return  queryset
+        
+@api_view(['POST'])
+def start_payment_Pathology(request):
+    # request.data is coming from frontend
+    user= int(request.data['user'])
+    pathologist= int(request.data['Patholgist'])
+    accepted= request.data['accepted']
+    amount = request.data['amount']
+    date = request.data['date']
+    start_time = request.data['start_time']
+    value= request.data['value']
+    print(value)
+    if value == "true":
+     order = PathologyBooking.objects.create( 
+                                 user= User.objects.get(id=user),
+                                 pathologist=Pathologist.objects.get(id=pathologist),
+                                 accepted=accepted,     
+                                 booking_amount=int(amount) * 100, 
+                                 date=date,
+                                 start_time=start_time,
+                                 booking_payment_id=0
+                                 )
+     order.save()
+     serializer =PathbookingSerializer(order)
      User.objects.filter(id=user).update(videocall=True)
      data = {
         "order": serializer.data,
@@ -642,7 +690,7 @@ class UserdoctorList(generics.ListCreateAPIView):
     authentication_classes = [TokenAuthentication]
     serializer_class = docotorSerializer
     def get_queryset(self):
-        queryset = Doctor.objects.filter(user=self.request.user)
+        queryset = Pathologist.objects.filter(user=self.request.user)
         return  queryset
    
 
@@ -650,6 +698,22 @@ class UserdoctorDetail(generics.RetrieveUpdateDestroyAPIView):
     # permission_classes=[IsAuthenticated]
     queryset = Doctor.objects.all()
     serializer_class = docotorSerializer
+    
+
+#private pathology---
+class UserPathologistList(generics.ListCreateAPIView):
+    # permission_classes=[IsAuthenticated]
+    permission_classes=[IsAuthenticated]
+    authentication_classes = [TokenAuthentication]
+    serializer_class = pathologistSerializer
+    def get_queryset(self):
+        queryset = Pathologist.objects.filter(user=self.request.user)
+        return  queryset
+
+class UserPathologistDetail(generics.RetrieveUpdateDestroyAPIView):
+    # permission_classes=[IsAuthenticated]
+    queryset = Pathologist.objects.all()
+    serializer_class = pathologistSerializer
 
 #private hospital
 class UserhospList(generics.ListCreateAPIView):
@@ -771,6 +835,29 @@ class getdocdatashare(generics.ListCreateAPIView):
         queryset = DocDatashare.objects.filter(Doctor=data) 
         return  queryset
 
+#Pathology
+class getuser_pathdatashare(generics.ListCreateAPIView):
+    permission_classes=[IsAuthenticated]
+    authentication_classes = [TokenAuthentication] 
+    serializer_class = PatientpathologyDatashareSerializer
+    def get_queryset(self):
+        queryset = PathologyDatashare.objects.filter(user=self.request.user)
+        return  queryset
+        
+class updateuser_pathdatashare(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes=[IsAuthenticated]
+    authentication_classes = [TokenAuthentication] 
+    queryset = PathologyDatashare.objects.all()
+    serializer_class =uppathDatashareSerializer
+
+class getpath_datashare(generics.ListCreateAPIView):
+    permission_classes=[IsAuthenticated]
+    authentication_classes = [TokenAuthentication] 
+    serializer_class = pathDatashareSerializer
+    def get_queryset(self):
+        data = Pathologist.objects.get(user=self.request.user) 
+        queryset = PathologyDatashare.objects.filter(pathologist=data) 
+        return  queryset
 
 
 
@@ -807,6 +894,15 @@ class doctorDetail(generics.RetrieveUpdateDestroyAPIView):
     # permission_classes=[IsAuthenticated]
     queryset = Doctor.objects.all()
     serializer_class = docotorSerializer
+
+class PathologistList(generics.ListCreateAPIView):
+    # permission_classes=[IsAuthenticated]
+    queryset = Pathologist.objects.all()
+    serializer_class = pathologistSerializer
+class PathologistDetail(generics.RetrieveUpdateDestroyAPIView):
+    # permission_classes=[IsAuthenticated]
+    queryset = Pathologist.objects.all()
+    serializer_class = pathologistSerializer
 
 class hospList(generics.ListCreateAPIView):
     # permission_classes=[IsAuthenticated]
