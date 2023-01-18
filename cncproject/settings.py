@@ -43,8 +43,8 @@ INSTALLED_APPS = [
     'cncapp',
     'rest_framework',
     'rest_framework.authtoken',
-    'knox',
     'django_filters',
+    'agora',
 
 ]
 
@@ -157,9 +157,6 @@ MEDIA_URL = '/media/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'knox.auth.TokenAuthentication',
-    ],
     'DEFAULT_FILTER_BACKENDS':
      ['django_filters.rest_framework.DjangoFilterBackend']
 }

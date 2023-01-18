@@ -10,26 +10,14 @@ from .models import *
 
 
 class UserRegisterSerializer(serializers.ModelSerializer):
-    password=serializers.CharField(required=True,write_only=True)
     class Meta:
         model= User
-        fields = ['username','full_name','email', 'password','usertype','gender','bloodgroup','phone_no','is_verified']
-        extra_kwargs={
-            'password':{'write_only':True},
-         }
+        fields = ['phone_no','username','usertype','dob']
 
     
     def create(self,validated_data):
-         username=validated_data.get('username')
-         email=validated_data.get('email')
-         password=validated_data.get('password')
-         full_name=validated_data.get('full_name')
-         usertype=validated_data.get('usertype')
-         gender=validated_data.get('gender')
-         bloodgroup=validated_data.get('bloodgroup')
          phone_no=validated_data.get('phone_no')
-         user=User(username=username,email=email,full_name= full_name,usertype=usertype,gender=gender,bloodgroup=bloodgroup,phone_no=phone_no)
-         user.set_password(password)
+         user=User(phone_no=phone_no)
          user.save()
          return user
 
@@ -41,17 +29,17 @@ class VerifySerializer(serializers.Serializer):
 class UserDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model= User
-        fields = ['id','username','full_name','email','usertype','gender','bloodgroup','phone_no','videocall']
+        fields = ['id','phone_no','username','usertype','dob']
     
 
 
 
 
-class PatientSerializer(serializers.ModelSerializer):
-    # user=serializers.HiddenField(default=serializers.CurrentUserDefault())
-    class Meta:
-        model = Patient
-        fields = '__all__'
+# class PatientSerializer(serializers.ModelSerializer):
+#     # user=serializers.HiddenField(default=serializers.CurrentUserDefault())
+#     class Meta:
+#         model = Patient
+#         fields = '__all__'
 
 
 
@@ -73,7 +61,7 @@ class PharmaSerializer(serializers.ModelSerializer):
 #hospital
 
 class PatientDatashareSerializer(serializers.ModelSerializer):
-     user=serializers.HiddenField(default=serializers.CurrentUserDefault())
+    #  user=serializers.HiddenField(default=serializers.CurrentUserDefault())
      class Meta:
          model=Datashare
          fields='__all__'
@@ -100,11 +88,11 @@ class AmbulanceDatashareSerializer(serializers.ModelSerializer):
 
 #doc
 class PatientdocDatashareSerializer(serializers.ModelSerializer):
-     user=serializers.HiddenField(default=serializers.CurrentUserDefault())
+     #user=serializers.HiddenField(default=serializers.CurrentUserDefault())
      class Meta:
          model=DocDatashare
-         fields='__all__'
-
+         fields='__all__' 
+         
 class DocDatashareSerializer(serializers.ModelSerializer):
      class Meta:
          model=DocDatashare

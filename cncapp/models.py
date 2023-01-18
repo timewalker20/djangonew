@@ -27,29 +27,31 @@ User_type={
 }
 
 class User(AbstractUser):
-    email=models.EmailField(unique=True)
-    full_name = models.CharField(max_length=300,default="0")
     usertype= models.CharField(max_length=30)
-    gender = models.CharField(max_length=10,)
-    bloodgroup = models.CharField(max_length=15,)
-    phone_no = models.CharField(max_length = 13)
-    videocall= models.BooleanField(default=False)
-    is_verified = models.BooleanField(default=False)
+    phone_no = models.CharField(max_length = 13,unique=True)
+    dob=models.CharField(max_length=11,default="0")
+    # videocall= models.BooleanField(default=False)
     otp = models.CharField(max_length=6,null=True,blank=True)
+   
+    
 
-class Patient(models.Model):
-    user = models.OneToOneField(User,on_delete=models.CASCADE,null=True)
-    full_name = models.CharField(max_length=300,default="0")
-    email = models.EmailField(max_length=300,unique=True)
-    contactno = models.CharField( max_length=13,default="0")
-    pincode = models.CharField(max_length = 10,default="0")
-    disease = models.TextField(max_length=300,blank=False)
-    aadhaarno = models.CharField(max_length=12,default="0")
-    emergency = models.TextField(max_length=400,blank=False,null=True)
-    gender = models.CharField(max_length=10,blank=False,default="0")
-    bloodgroup = models.CharField(max_length=15,blank=False,default="0")
-    def __str__(self):
-        return self.full_name
+class Tempory(models.Model):
+      phone_no = models.CharField(max_length = 13,unique=True)
+      otp = models.CharField(max_length=6,null=True,blank=True)
+      verified=models.BooleanField(default=False)
+# class Patient(models.Model):
+#     user = models.OneToOneField(User,on_delete=models.CASCADE,null=True)
+#     full_name = models.CharField(max_length=300,default="0")
+#     email = models.EmailField(max_length=300,unique=True)
+#     contactno = models.CharField( max_length=13,default="0")
+#     pincode = models.CharField(max_length = 10,default="0")
+#     disease = models.TextField(max_length=300,blank=False)
+#     aadhaarno = models.CharField(max_length=12,default="0")
+#     emergency = models.TextField(max_length=400,blank=False,null=True)
+#     gender = models.CharField(max_length=10,blank=False,default="0")
+#     bloodgroup = models.CharField(max_length=15,blank=False,default="0")
+#     def __str__(self):
+#         return self.full_name
 
 
 class Doctor(models.Model):
@@ -187,7 +189,14 @@ class PathologyDatashare(models.Model):
     time= models.CharField(max_length=50,default="0")
     prescription=models.TextField(null=True)
     rtc=models.TextField(null=True)
+    uid=models.IntegerField(default = 0)
     complete=models.BooleanField(default=False)
+    channelName=models.CharField(max_length=50,default=" ")
+    paid=models.BooleanField(default=False)
+    current=models.BooleanField(default=True)
+    def __str__(self):
+        return self.full_name
+
 
 class Datashare(models.Model):
     user= models.ForeignKey(User,on_delete=models.CASCADE,null=True,blank=True,unique=False)
@@ -202,8 +211,9 @@ class Datashare(models.Model):
     bloodgroup = models.CharField(max_length=15,blank=False,default='B+')
     accept= models.BooleanField(default=False)
     time= models.CharField(max_length=50,default="0")
+    date=models.CharField(max_length=50,default="0")
     complete=models.BooleanField(default=False)
-
+    current=models.BooleanField(default=True)
     
     def __str__(self):
         return self.full_name
@@ -224,10 +234,7 @@ class AmbulnceDatashare(models.Model):
     longitude=models.FloatField(blank=False,default=0.0,null=True)
     latitude=models.FloatField(blank=False,default=0,null=True)
     time= models.CharField(max_length=50,default="0")
-    complete=models.BooleanField(default=False)
-
-    
-
+   
     def __str__(self):
         return self.full_name
 
@@ -243,11 +250,16 @@ class DocDatashare(models.Model):
     gender = models.CharField(max_length=10,blank=False,default='M')
     bloodgroup = models.CharField(max_length=15,blank=False,default='B+')
     accept= models.BooleanField(default=False)
-    time= models.CharField(max_length=50,default="0")
+    timeofshare= models.CharField(max_length=50,default="0")
     prescription=models.TextField(null=True)
     rtc=models.TextField(null=True)
+    uid=models.IntegerField(default = 0)
     complete=models.BooleanField(default=False)
-
+    channelName=models.CharField(max_length=50,default=" ")
+    paid=models.BooleanField(default=False)
+    current=models.BooleanField(default=True)
+    def __str__(self):
+        return self.full_name
 
 
     

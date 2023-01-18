@@ -1,4 +1,6 @@
 
+import string
+import time
 from django.utils import timezone
 import json
 from django.shortcuts import render,get_object_or_404
@@ -12,7 +14,6 @@ from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.views import APIView
 from rest_framework.authtoken.models import Token
-from knox.models import AuthToken
 from rest_framework import generics
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authtoken.models import Token
@@ -20,12 +21,12 @@ from rest_framework.response import Response
 from django.contrib.auth import login
 from rest_framework import permissions
 from rest_framework.authtoken.serializers import AuthTokenSerializer
-from knox.views import LoginView as KnoxLoginView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authentication import TokenAuthentication
 from rest_framework import filters
+from agora_token_builder import RtcTokenBuilder   
 #rzp_test_6KLtvINdjNoEpt
 #r4R6mqiWSOBMxENvbVzHS5pa
 #client
@@ -36,7 +37,7 @@ from django.shortcuts import render
 import razorpay
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
-from django.http import HttpResponseBadRequest
+from django.http import HttpResponseBadRequest, JsonResponse
 
 
 # authorize razorpay client with API Keys.
@@ -214,96 +215,19 @@ def paymenthandler(request):
 	else:
 	# if other than POST request is made.
 		return HttpResponseBadRequest()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+@csrf_exempt
+@api_view(['POST'])
+def gettoken(request):
+    appId="e0209d1f9cb942b39eff167125a12d7b"
+    appCertificate="b0de03e09adf49f9a7ba80d85e78c4dd"
+    channelName = request.data['channelName']
+    uid= random.randint(1,230)
+    expirationTimeINseconds=360*24
+    currentTimeStamp= time.time()
+    privilegeExpiredTs= currentTimeStamp+expirationTimeINseconds
+    role=1
+    token = RtcTokenBuilder.buildTokenWithUid(appId, appCertificate, channelName, uid, role, privilegeExpiredTs)  
+    return JsonResponse ({'token':token,'uid':uid },safe=False)
 
 
 
@@ -458,10 +382,24 @@ def start_payment(request):
                                  )
      order.save()
      serializer =bookingSerializer(order)
+     res = ''.join(random.choices(string.ascii_uppercase +
+                             string.digits, k=7))
+     appId="e0209d1f9cb942b39eff167125a12d7b"
+     appCertificate="b0de03e09adf49f9a7ba80d85e78c4dd"
+     channelName = res
+     uid= random.randint(1,230)
+     expirationTimeINseconds=360*24
+     currentTimeStamp= time.time()
+     privilegeExpiredTs= currentTimeStamp+expirationTimeINseconds
+     role=1
+     print(res)
+     token = RtcTokenBuilder.buildTokenWithUid(appId, appCertificate, channelName, uid, role, privilegeExpiredTs) 
+     DocDatashare.objects.filter(id=user).update(rtc=token)
      User.objects.filter(id=user).update(videocall=True)
      data = {
         "order": serializer.data,
-        "message":"booking done"
+        "message":"booking done",
+        "token":token
        }
      return Response(data)
     else:
@@ -560,6 +498,25 @@ class CustomAuthToken(ObtainAuthToken):
                 'message':'Account Not Verified'
 
             })
+        
+@api_view(['POST'])
+def Resend_phone_otp_register(request):
+     phone=request.data["phone"]
+     send_otp_phone(phone)
+     return Response({
+            "message":"OTP ResendSent"
+        })
+
+@api_view(['POST'])
+def Resend_phone_otp_login(request):
+     phone=request.data["phone"]
+     
+     send_otp_phone(phone)
+     return Response({
+            "message":"OTP ResendSent"
+        })
+     
+        
 from .email import *
 # Register API
 class RegisterAPI(generics.GenericAPIView):
@@ -569,11 +526,111 @@ class RegisterAPI(generics.GenericAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
-        send_otp_email(serializer.data['email'])
+        #send_otp_email(serializer.data['email'])
         return Response({
-        "user": UserDetailSerializer(user, context=self.get_serializer_context()).data
+        "user":{
+              "user": UserDetailSerializer(user, context=self.get_serializer_context()).data
+              } 
+        })
+    
+    
+@api_view(['POST'])
+def phone_otp_register(request):
+     phone=request.data["phone"]
+     if User.objects.filter(phone_no=phone).exists():
+        send_otp_login(phone)
+        return Response({
+            "message":"Otp sent",
+            "number":phone
+        })
+     else:
+      data=Tempory.objects.create(phone_no=phone)
+      data.save()
+      send_otp_phone(phone)
+     return Response({
+            "message":"OTP Sent",
+            "number":phone
         })
 
+@api_view(['POST'])
+def phone_otp_verify_register(request):
+    phone =request.data["phone"]
+    otp=request.data["otp"]
+    if User.objects.filter(phone_no=phone).exists():
+        user=User.objects.get(phone_no=phone)
+        if  user.otp != otp:
+          return Response({
+             'status':400,
+             'message':'Wrong otp'
+            })  
+        else:
+            token, created = Token.objects.get_or_create(user=user)
+            return Response({
+               "user":{
+               'token': token.key,
+               'user_id': user.pk,
+               'username':user.username,
+               'usertype':user.usertype,
+               'phone_no':user.phone_no if user.phone_no else '',
+                }
+              })
+
+    else:
+        new=Tempory.objects.get(phone_no=phone)
+        if  new.otp != otp:
+         return Response({
+             'status':400,
+             'message':'Wrong otp'
+            })  
+        Tempory.objects.filter(phone_no=phone).update(verified=True)
+    return Response({
+             'status':200,
+             'Warning':"New User! complete your profile",
+             'message':'Phone Number Verified',
+             'phone no ': phone
+            })  
+
+@api_view(['POST'])
+def fullregister(request):
+    phone =request.data["phone"]
+    username=request.data["username"]
+    usertype=request.data["usertype"]
+    dob=request.data["dob"]
+    data=User.objects.create(
+         phone_no=phone,
+         username=username,
+         dob=dob,
+         usertype=usertype
+     )
+    data.save()
+    Tempory.objects.filter(phone_no=phone).delete()
+    user=User.objects.get(phone_no=phone)
+    token, created = Token.objects.get_or_create(user=user)
+    return Response({
+               'user':{
+               'token': token.key,
+               'user_id': user.pk,
+               'username':user.username,
+               'usertype':user.usertype,
+               'phone_no':user.phone_no if user.phone_no else '',
+               }
+              })
+class AuthToken(generics.GenericAPIView):
+    def post(self, request, *args, **kwargs):
+        phone =request.data["phone"]
+        # otp=request.data['otp']
+        user=User.objects.get(phone_no=phone)
+        print(user)
+        if User.objects.filter(username=user).exists():
+        #    if User.objects.filter(otp=otp).exists():
+              token, created = Token.objects.get_or_create(user=user)
+              return Response({
+               'token': token.key,
+               'user_id': user.pk,
+               'username':user.username,
+               'usertype':user.usertype,
+               'phone_no':user.phone_no if user.phone_no else '',
+              })    
 
 class verifyOTP(APIView):
       def post(self,request):
@@ -635,30 +692,38 @@ def PasswordReset(request):
 
 
 #private--pharma
+@api_view(['GET'])
+def GetPharmaMed(request,pk):
+    product = Pharmacist.objects.get(id=pk)
+    queryset=Inventory.objects.filter(Pharmacist=product)
+    serializer = MedSerializer(queryset, many=True)
+    return JsonResponse(serializer.data, safe=False)
 
 class UserPharmaList(generics.ListCreateAPIView):
     # permission_classes=[IsAuthenticated]
     permission_classes=[IsAuthenticated]
     authentication_classes = [TokenAuthentication] 
     serializer_class = PharmaSerializer
-    def get_queryset(self):
+    def get(self, request, *args, **kwargs):
         queryset = Pharmacist.objects.filter(user=self.request.user)
-        return  queryset
+        serializer =PharmaSerializer(queryset, many=True)
+        return JsonResponse({"Pharmacist":serializer.data}, safe=False)
     def perform_create(self, serializer):
         serializer.save()
 
 class UserMedtList(generics.ListCreateAPIView):
     permission_classes=[IsAuthenticated]
     authentication_classes = [TokenAuthentication] 
-    serializer_class = MedSerializer
-    def get_queryset(self):
+    def get(self, request, *args, **kwargs):
         queryset = Inventory.objects.filter(user=self.request.user)
-        return  queryset
+        serializer =MedSerializer(queryset, many=True)
+        return JsonResponse({"Medicines":serializer.data}, safe=False)
 
 
 class UserMedDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Inventory.objects.all()
     serializer_class = MedSerializer
+
 
 class UserpharmaDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Pharmacist.objects.all()
@@ -667,19 +732,19 @@ class UserpharmaDetail(generics.RetrieveUpdateDestroyAPIView):
 
 #private patient
 
-class UserPatientList(generics.ListCreateAPIView):
-    permission_classes=[IsAuthenticated]
-    authentication_classes = [TokenAuthentication]
-    serializer_class = PatientSerializer
-    def get_queryset(self):
-        queryset = Patient.objects.filter(user=self.request.user)
-        return  queryset
+# class UserPatientList(generics.ListCreateAPIView):
+#     permission_classes=[IsAuthenticated]
+#     authentication_classes = [TokenAuthentication]
+#     serializer_class = PatientSerializer
+#     def get_queryset(self):
+#         queryset = Patient.objects.filter(user=self.request.user)
+#         return  queryset
    
 
-class UserPatientDetail(generics.RetrieveUpdateDestroyAPIView):
-    # permission_classes=[IsAuthenticated]
-    serializer_class = PatientSerializer
-    queryset = Patient.objects.all()
+# class UserPatientDetail(generics.RetrieveUpdateDestroyAPIView):
+#     # permission_classes=[IsAuthenticated]
+#     serializer_class = PatientSerializer
+#     queryset = Patient.objects.all()
    
     
 
@@ -690,8 +755,9 @@ class UserdoctorList(generics.ListCreateAPIView):
     authentication_classes = [TokenAuthentication]
     serializer_class = docotorSerializer
     def get_queryset(self):
-        queryset = Pathologist.objects.filter(user=self.request.user)
+        queryset = Doctor.objects.filter(user=self.request.user)
         return  queryset
+    
    
 
 class UserdoctorDetail(generics.RetrieveUpdateDestroyAPIView):
@@ -763,11 +829,55 @@ class UserAmbulancedetail(generics.RetrieveUpdateDestroyAPIView):
 class getuserdatashare(generics.ListCreateAPIView):
     permission_classes=[IsAuthenticated]
     authentication_classes = [TokenAuthentication] 
-    serializer_class = PatientDatashareSerializer
-    def get_queryset(self):
-        queryset = Datashare.objects.filter(user=self.request.user)
-        return  queryset
-
+    def get(self, request, *args, **kwargs):   
+        queryset = Datashare.objects.filter(user=self.request.user,complete=False)
+        serializer =PatientDatashareSerializer(queryset, many=True)
+        return JsonResponse({"HospitalDatashare":serializer.data}, safe=False)
+    
+class getuserdatashare_accepted(generics.ListCreateAPIView):
+    permission_classes=[IsAuthenticated]
+    authentication_classes = [TokenAuthentication] 
+    def get(self, request, *args, **kwargs):   
+        queryset = Datashare.objects.filter(user=self.request.user,accept=True)
+        serializer =PatientDatashareSerializer(queryset, many=True)
+        return JsonResponse({"HospitalDatashare":serializer.data}, safe=False)
+    
+    def post(self, request, *args, **kwargs):
+           full_name=request.data["full_name"]
+           email= request.data["email"]
+           contactno=request.data["contactno"]
+           disease=request.data["disease"]
+           aadhaarno=request.data["aadhaarno"]
+           emergency=request.data["emergency"]
+           gender=request.data["gender"]
+           bloodgroup=request.data["bloodgroup"]
+           accept=request.data["accept"]
+           date=request.data["date"]
+           time=request.data["time"]
+           user=int(request.data["user"])
+           hospital=int(request.data["hospital"])
+           order = Datashare.objects.create( 
+                                            hospital=Hospital.objects.get(id=hospital),   
+                                            user=User.objects.get(id=user),
+                                            full_name = full_name,
+                                            email = email,
+                                            contactno = contactno,
+                                            disease =  disease ,
+                                            aadhaarno = aadhaarno,
+                                            emergency =emergency,
+                                            gender =gender,
+                                            bloodgroup =bloodgroup,
+                                            accept=accept,
+                                            date=date,
+                                            time=time,                              
+           )
+           order.save()
+           serializer =PatientDatashareSerializer(order)
+           return JsonResponse({
+                    "HospitalDatashare":serializer.data
+                         }
+             )
+    
 class updategetuserdatashare(generics.RetrieveUpdateDestroyAPIView):
     permission_classes=[IsAuthenticated]
     authentication_classes = [TokenAuthentication] 
@@ -775,16 +885,40 @@ class updategetuserdatashare(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = PatientDatashareSerializer
 
 
+@api_view(['POST'])
+def accept(request):
+        accept=request.data.get('accept')
+        pk=request.data.get('pk')
+        if accept == True:
+            data=Datashare.objects.filter(id=pk).update(accept=True,complete=True)
+            return Response({
+                'message':'Your booking is Accepted'
+            })
+        else:
+         return Response(
+            {
+            'message':'Your booking with hospital is Rejected'
+            }
+        )
 
 class gethospitaldatashare(generics.ListCreateAPIView):
     permission_classes=[IsAuthenticated]
     authentication_classes = [TokenAuthentication] 
-    serializer_class = hospitalDatashareSerializer
-    def get_queryset(self):
+    
+    def get(self, request, *args, **kwargs):   
         data = Hospital.objects.get(user=self.request.user)
-        queryset = Datashare.objects.filter(hospital=data)  
-        return  queryset
-
+        queryset = Datashare.objects.filter(hospital=data,complete=False) 
+        serializer =hospitalDatashareSerializer(queryset, many=True)
+        return JsonResponse({"HospitlDatashare":serializer.data}, safe=False)
+    
+class gethospitaldatashare_accepted(generics.ListCreateAPIView):
+    permission_classes=[IsAuthenticated]
+    authentication_classes = [TokenAuthentication] 
+    def get(self, request, *args, **kwargs):   
+        data = Hospital.objects.get(user=self.request.user)
+        queryset = Datashare.objects.filter(hospital=data,accept=True) 
+        serializer =hospitalDatashareSerializer(queryset, many=True)
+        return JsonResponse({"HospitlDatashare":serializer.data}, safe=False)
 #ambu
 class updateuserAmbulancedatashare(generics.RetrieveUpdateDestroyAPIView):
     permission_classes=[IsAuthenticated]
@@ -815,11 +949,101 @@ class getAmbulancedatashare(generics.ListCreateAPIView):
 class getuserdocdatashare(generics.ListCreateAPIView):
     permission_classes=[IsAuthenticated]
     authentication_classes = [TokenAuthentication] 
-    serializer_class = PatientdocDatashareSerializer
-    def get_queryset(self):
-        queryset = DocDatashare.objects.filter(user=self.request.user)
-        return  queryset
-        
+    def get(self, request, *args, **kwargs):   
+        queryset=DocDatashare.objects.filter(user=self.request.user,current=True,paid=True)
+        serializer =PatientdocDatashareSerializer(queryset, many=True)
+        return JsonResponse({"DoctorDatashare":serializer.data}, safe=False)
+
+    def post(self, request, *args, **kwargs):
+            full_name=request.data["full_name"]
+            email=request.data["email"]
+            contactno=request.data["contactno"]
+            disease=request.data["disease"]
+            emergency=request.data["emergency"]
+            gender=request.data["gender"]
+            bloodgroup=request.data["bloodgroup"]
+            aadhaarno=request.data["aadhaarno"]
+            accept=request.data["accept"]
+            timeofshare=request.data["timeofshare"]
+            prescription=request.data["prescription"]
+            user=int(request.data["user"])
+            doctor= int(request.data["Doctor"])
+            appId="e0209d1f9cb942b39eff167125a12d7b"
+            appCertificate="b0de03e09adf49f9a7ba80d85e78c4dd"
+            channelName = full_name
+            uid= random.randint(1,230)
+            expirationTimeINseconds=360*24
+            currentTimeStamp= time.time()
+            privilegeExpiredTs= currentTimeStamp+expirationTimeINseconds
+            role=1
+            if DocDatashare.objects.filter(user=self.request.user,Doctor=Doctor.objects.get(id=doctor)).exists():
+             if DocDatashare.objects.filter(user=self.request.user,Doctor=Doctor.objects.get(id=doctor),paid=True,current=True).exists():
+              obj= DocDatashare.objects.get(user=self.request.user,Doctor=Doctor.objects.get(id=doctor),paid=True,current=True)
+              obj.current = False
+              obj.save()
+              order = DocDatashare.objects.create( 
+                                            Doctor= Doctor.objects.get(id=doctor),   
+                                            user=User.objects.get(id=user),
+                                            full_name = full_name,
+                                            email = email,
+                                            contactno = contactno,
+                                            disease =  disease ,
+                                            aadhaarno = aadhaarno,
+                                            emergency =emergency,
+                                            gender =gender,
+                                            bloodgroup =bloodgroup,
+                                            accept= accept,
+                                            timeofshare= timeofshare,
+                                            rtc= RtcTokenBuilder.buildTokenWithUid(appId, appCertificate, channelName, uid, role, privilegeExpiredTs),
+                                            uid=uid,
+                                            channelName=full_name
+                                 )
+              order.save()
+              serializer =PatientdocDatashareSerializer(order)
+              print("done")
+              return JsonResponse({
+                    "DoctorDatashare":serializer.data
+                         }
+              )
+             else:
+                obj= DocDatashare.objects.filter(user=self.request.user,paid=False,current=True)
+                serializer =PatientdocDatashareSerializer(obj, many=True)
+                return JsonResponse({"DoctorDatashare":serializer.data}, safe=False)
+            else:
+                order = DocDatashare.objects.create( 
+                                            Doctor= Doctor.objects.get(id=doctor),   
+                                            user=User.objects.get(id=user),
+                                            full_name = full_name,
+                                            email = email,
+                                            contactno = contactno,
+                                            disease =  disease ,
+                                            aadhaarno = aadhaarno,
+                                            emergency =emergency,
+                                            gender =gender,
+                                            bloodgroup =bloodgroup,
+                                            accept= accept,
+                                            timeofshare= timeofshare,
+                                            rtc= RtcTokenBuilder.buildTokenWithUid(appId, appCertificate, channelName, uid, role, privilegeExpiredTs),
+                                            uid=uid,
+                                            channelName=full_name
+                                 )
+                order.save()
+                serializer =PatientdocDatashareSerializer(order)
+                print("done")
+                return JsonResponse({
+                    "DoctorDatashare":serializer.data
+                         }
+                )
+
+class getuserdocdatashare_completed(generics.ListCreateAPIView):
+    permission_classes=[IsAuthenticated]
+    authentication_classes = [TokenAuthentication] 
+    def get(self, request, *args, **kwargs):   
+        queryset=DocDatashare.objects.filter(user=self.request.user,current=False,complete=True,paid=True)
+        serializer =PatientdocDatashareSerializer(queryset, many=True)
+        return JsonResponse({"DoctorDatashare":serializer.data}, safe=False)
+    
+                
 class updateuserdocdatashar(generics.RetrieveUpdateDestroyAPIView):
     permission_classes=[IsAuthenticated]
     authentication_classes = [TokenAuthentication] 
@@ -829,21 +1053,135 @@ class updateuserdocdatashar(generics.RetrieveUpdateDestroyAPIView):
 class getdocdatashare(generics.ListCreateAPIView):
     permission_classes=[IsAuthenticated]
     authentication_classes = [TokenAuthentication] 
-    serializer_class = DocDatashareSerializer
-    def get_queryset(self):
+    def get(self, request, *args, **kwargs):
         data = Doctor.objects.get(user=self.request.user) 
-        queryset = DocDatashare.objects.filter(Doctor=data) 
-        return  queryset
+        queryset = DocDatashare.objects.filter(Doctor=data,paid=True,complete=False) 
+        serializer =PatientdocDatashareSerializer(queryset, many=True)
+        return JsonResponse({"DocDatashare":serializer.data}, safe=False)
+    
+class getcompleteddocdatashare(generics.ListCreateAPIView):
+    permission_classes=[IsAuthenticated]
+    authentication_classes = [TokenAuthentication] 
+    def get(self, request, *args, **kwargs):
+        data = Doctor.objects.get(user=self.request.user) 
+        queryset = DocDatashare.objects.filter(Doctor=data,paid=True,complete=True) 
+        serializer =PatientdocDatashareSerializer(queryset, many=True)
+        return JsonResponse({"DocDatashare":serializer.data}, safe=False)
+     
+
+@api_view(['POST'])
+def completedatashare(request):
+    pk=request.data['pk']
+    DocDatashare.objects.filter(id=pk).update(complete=True)    
+    return Response({"message":" marked as complete"})
+
+@api_view(['POST'])
+def DoctorPayment(request):
+    value= request.data['value']
+    pk=request.data['pk']
+    if value == True:
+     DocDatashare.objects.filter(id=pk).update(paid=True)   
+     return JsonResponse(
+        {
+         "message":"done"
+        }
+     )
+    else:
+        return JsonResponse({
+            "message":"Error"
+        })
 
 #Pathology
 class getuser_pathdatashare(generics.ListCreateAPIView):
     permission_classes=[IsAuthenticated]
     authentication_classes = [TokenAuthentication] 
     serializer_class = PatientpathologyDatashareSerializer
-    def get_queryset(self):
-        queryset = PathologyDatashare.objects.filter(user=self.request.user)
-        return  queryset
-        
+    def get(self, request, *args, **kwargs):   
+        queryset=PathologyDatashare.objects.filter(user=self.request.user,current=True,paid=True)
+        serializer =PatientpathologyDatashareSerializer(queryset, many=True)
+        return JsonResponse({"DoctorDatashare":serializer.data}, safe=False)
+    
+    def post(self, request, *args, **kwargs):
+            full_name=request.data["full_name"]
+            email=request.data["email"]
+            contactno=request.data["contactno"]
+            disease=request.data["disease"]
+            emergency=request.data["emergency"]
+            gender=request.data["gender"]
+            bloodgroup=request.data["bloodgroup"]
+            aadhaarno=request.data["aadhaarno"]
+            accept=request.data["accept"]
+            timeofshare=request.data["timeofshare"]
+            prescription=request.data["prescription"]
+            user=int(request.data["user"])
+            pathologist= int(request.data["Doctor"])
+            appId="e0209d1f9cb942b39eff167125a12d7b"
+            appCertificate="b0de03e09adf49f9a7ba80d85e78c4dd"
+            channelName = full_name
+            uid= random.randint(1,230)
+            expirationTimeINseconds=360*24
+            currentTimeStamp= time.time()
+            privilegeExpiredTs= currentTimeStamp+expirationTimeINseconds
+            role=1
+            if PathologyDatashare.objects.filter(user=self.request.user,pathologist=Pathologist.objects.get(id=pathologist)).exists():
+             if PathologyDatashare.objects.filter(user=self.request.user,pathologist=Pathologist.objects.get(id=pathologist),paid=True,current=True).exists():
+                obj= PathologyDatashare.objects.get(user=self.request.user,pathologist=Pathologist.objects.get(id=pathologist),paid=True,current=True)
+                obj.current = False
+                obj.save()
+                order = PathologyDatashare.objects.create( 
+                                            pathologist= Pathologist.objects.get(id=pathologist),   
+                                            user=User.objects.get(id=user),
+                                            full_name = full_name,
+                                            email = email,
+                                            contactno = contactno,
+                                            disease =  disease ,
+                                            aadhaarno = aadhaarno,
+                                            emergency =emergency,
+                                            gender =gender,
+                                            bloodgroup =bloodgroup,
+                                            accept= accept,
+                                            timeofshare= timeofshare,
+                                            rtc= RtcTokenBuilder.buildTokenWithUid(appId, appCertificate, channelName, uid, role, privilegeExpiredTs),
+                                            uid=uid,
+                                            channelName=full_name
+                                 )
+                order.save()
+                serializer =PatientpathologyDatashareSerializer(order)
+                print("done")
+                return JsonResponse({
+                    "PathologyDatashare":serializer.data
+                         }
+                 )
+             else:
+                obj= PathologyDatashare.objects.filter(user=self.request.user,paid=False,current=True)
+                serializer =PatientpathologyDatashareSerializer(obj, many=True)
+                return JsonResponse({"PathologyDatashare":serializer.data}, safe=False)
+            else:
+                order = PathologyDatashare.objects.create( 
+                                            Doctor= Doctor.objects.get(id=pathologist),   
+                                            user=User.objects.get(id=user),
+                                            full_name = full_name,
+                                            email = email,
+                                            contactno = contactno,
+                                            disease =  disease ,
+                                            aadhaarno = aadhaarno,
+                                            emergency =emergency,
+                                            gender =gender,
+                                            bloodgroup =bloodgroup,
+                                            accept= accept,
+                                            timeofshare= timeofshare,
+                                            rtc= RtcTokenBuilder.buildTokenWithUid(appId, appCertificate, channelName, uid, role, privilegeExpiredTs),
+                                            uid=uid,
+                                            channelName=full_name
+                                 )
+                order.save()
+                serializer =PatientpathologyDatashareSerializer(order)
+                print("done")
+                return JsonResponse({
+                    "PathologyDatashare":serializer.data
+                         }
+                )
+            
 class updateuser_pathdatashare(generics.RetrieveUpdateDestroyAPIView):
     permission_classes=[IsAuthenticated]
     authentication_classes = [TokenAuthentication] 
@@ -854,11 +1192,33 @@ class getpath_datashare(generics.ListCreateAPIView):
     permission_classes=[IsAuthenticated]
     authentication_classes = [TokenAuthentication] 
     serializer_class = pathDatashareSerializer
-    def get_queryset(self):
+    def get(self, request, *args, **kwargs):
         data = Pathologist.objects.get(user=self.request.user) 
-        queryset = PathologyDatashare.objects.filter(pathologist=data) 
-        return  queryset
+        queryset =PathologyDatashare.objects.filter(Doctor=data,paid=True,complete=True) 
+        serializer =uppathDatashareSerializer(queryset, many=True)
+        return JsonResponse({"PathologyDatashare":serializer.data}, safe=False)
+    
+@api_view(['POST'])
+def completepathologydatashare(request):
+    pk=request.data['pk']
+    PathologyDatashare.objects.filter(id=pk).update(complete=True)    
+    return Response({"message":" marked as complete"})
 
+@api_view(['POST'])
+def PathologistPayment(request):
+    value= request.data['value']
+    pk=request.data['pk']
+    if value == True:
+     PathologyDatashare.objects.filter(id=pk).update(paid=True)   
+     return JsonResponse(
+        {
+         "message":"done"
+        }
+     )
+    else:
+        return JsonResponse({
+            "message":"Error"
+        })
 
 
 
@@ -890,6 +1250,11 @@ class doctorList(generics.ListCreateAPIView):
     # permission_classes=[IsAuthenticated]
     queryset = Doctor.objects.all()
     serializer_class = docotorSerializer
+    def get(self, request, *args, **kwargs):   
+        queryset=Doctor.objects.all()
+        serializer =docotorSerializer(queryset, many=True)
+        return JsonResponse({"Doctors":serializer.data}, safe=False)
+    
 class doctorDetail(generics.RetrieveUpdateDestroyAPIView):
     # permission_classes=[IsAuthenticated]
     queryset = Doctor.objects.all()
@@ -899,6 +1264,11 @@ class PathologistList(generics.ListCreateAPIView):
     # permission_classes=[IsAuthenticated]
     queryset = Pathologist.objects.all()
     serializer_class = pathologistSerializer
+    def get(self, request, *args, **kwargs):   
+        queryset=Pathologist.objects.all()
+        serializer =pathologistSerializer(queryset, many=True)
+        return JsonResponse({"Pathologists":serializer.data}, safe=False)
+    
 class PathologistDetail(generics.RetrieveUpdateDestroyAPIView):
     # permission_classes=[IsAuthenticated]
     queryset = Pathologist.objects.all()
@@ -906,8 +1276,10 @@ class PathologistDetail(generics.RetrieveUpdateDestroyAPIView):
 
 class hospList(generics.ListCreateAPIView):
     # permission_classes=[IsAuthenticated]
-    queryset = Hospital.objects.all()
-    serializer_class = hospitalSerializer
+    def get(self, request, *args, **kwargs):   
+        queryset=Hospital.objects.all()
+        serializer =hospitalSerializer(queryset, many=True)
+        return JsonResponse({"Pathologists":serializer.data}, safe=False)
 
 class hospDetail(generics.RetrieveUpdateDestroyAPIView):
     # permission_classes=[IsAuthenticated]
@@ -917,8 +1289,10 @@ class hospDetail(generics.RetrieveUpdateDestroyAPIView):
 
 class Ambulancelist(generics.ListCreateAPIView):
     # permission_classes=[IsAuthenticated]
-    queryset =Ambulance.objects.all()
-    serializer_class = AmbulanceSerializer
+    def get(self, request, *args, **kwargs):   
+        queryset=Ambulance.objects.all()
+        serializer =AmbulanceSerializer(queryset, many=True)
+        return JsonResponse({"Pathologists":serializer.data}, safe=False)
 
 class Ambulancedetail(generics.RetrieveUpdateDestroyAPIView):
     # permission_classes=[IsAuthenticated]
@@ -927,12 +1301,7 @@ class Ambulancedetail(generics.RetrieveUpdateDestroyAPIView):
 
 
 from django.http import HttpResponse, JsonResponse
-@api_view(['GET'])
-def GetPharmaMed(request,pk):
-    product = Pharmacist.objects.get(id=pk)
-    queryset=Inventory.objects.filter(Pharmacist=product)
-    serializer = MedSerializer(queryset, many=True)
-    return JsonResponse(serializer.data, safe=False)
+
 
 
 
