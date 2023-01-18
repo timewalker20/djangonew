@@ -29,7 +29,6 @@ User_type={
 class User(AbstractUser):
     usertype= models.CharField(max_length=30)
     phone_no = models.CharField(max_length = 13,unique=True)
-    dob=models.CharField(max_length=11,default="0")
     # videocall= models.BooleanField(default=False)
     otp = models.CharField(max_length=6,null=True,blank=True)
    

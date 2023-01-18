@@ -595,7 +595,6 @@ def fullregister(request):
     phone =request.data["phone"]
     username=request.data["username"]
     usertype=request.data["usertype"]
-    dob=request.data["dob"]
     data=User.objects.create(
          phone_no=phone,
          username=username,
