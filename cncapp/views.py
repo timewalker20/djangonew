@@ -1152,7 +1152,7 @@ class getuser_pathdatashare(generics.ListCreateAPIView):
                                             gender =gender,
                                             bloodgroup =bloodgroup,
                                             accept= accept,
-                                            timeofshare= timeofshare,
+                                            time= timeofshare,
                                             rtc= RtcTokenBuilder.buildTokenWithUid(appId, appCertificate, channelName, uid, role, privilegeExpiredTs),
                                             uid=uid,
                                             channelName=full_name
