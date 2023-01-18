@@ -1170,7 +1170,7 @@ class getuser_pathdatashare(generics.ListCreateAPIView):
                 return JsonResponse({"PathologyDatashare":serializer.data}, safe=False)
             else:
                 order = PathologyDatashare.objects.create( 
-                                            Doctor= Doctor.objects.get(id=pathologist),   
+                                            Doctor= Pathologist.objects.get(id=pathologist),   
                                             user=User.objects.get(id=user),
                                             full_name = full_name,
                                             email = email,
