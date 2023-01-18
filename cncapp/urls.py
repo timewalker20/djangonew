@@ -67,7 +67,7 @@ urlpatterns = [
     path('up-docdatashare/<int:pk>/',views.updateuserdocdatashar.as_view()),
     path('doc-datashare/',views.getdocdatashare.as_view()),
     path('complete-datashare/',views.completedatashare),
-    path('DoctorPayment/',views.DoctorPayment),
+    path('DoctorPayment/',views.DoctorPayment.as_view()),
     path('get-user-completed/',views.getuserdocdatashare_completed.as_view()),
     path('get-doc-completed/',views.getcompleteddocdatashare.as_view()),
     # path('booking-pay/', views.start_payment, name="payment"),
@@ -81,7 +81,7 @@ urlpatterns = [
     path('path-datashare/',views.getpath_datashare.as_view()),
     path('complete-datashare/',views.completepathologydatashare),
     path('PathologyPayment/',views.PathologistPayment),
-
+    path('get-path-completed/',views.getcompletedpathdatashare.as_view()),
     # path('paymenthandler',views.paymenthandler,),
     # path('user-pathbook/',views.getuser_pathbooking.as_view()),
     # path('path-pathbook/',views.getpath_booking.as_view()),

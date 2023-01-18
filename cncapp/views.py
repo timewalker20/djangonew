@@ -1088,19 +1088,39 @@ def completedatashare(request):
     DocDatashare.objects.filter(id=pk).update(complete=True)    
     return Response({"message":" marked as complete"})
 
-@api_view(['POST'])
-def DoctorPayment(request):
-    value= request.data['value']
-    pk=request.data['pk']
-    if value == True:
-     DocDatashare.objects.filter(id=pk).update(paid=True)   
-     return JsonResponse(
-        {
-         "message":"done"
-        }
-     )
-    else:
-        return JsonResponse({
+# @api_view(['POST'])
+# def DoctorPayment(request):
+#     value= request.data['value']
+#     pk=request.data['pk']
+#     if value == True:
+#      DocDatashare.objects.filter(user=self.request.user,Doctor=,paid=True,current=True
+#      DocDatashare.objects.filter(id=pk).update(paid=True)   
+#      return JsonResponse(
+#         {
+#          "message":"done"
+#         }
+#      )
+#     else:
+#         return JsonResponse({
+#             "message":"Error"
+#         })
+class DoctorPayment(generics.ListCreateAPIView):
+    permission_classes=[IsAuthenticated]
+    authentication_classes = [TokenAuthentication]
+    def post(self, request, *args, **kwargs):
+        value= request.data['value']
+        pk=request.data['pk']
+        if value == True:
+              queryset=DocDatashare.objects.get(user=self.request.user,Doctor=pk,paid=False,current=True)
+              queryset.paid=True
+              queryset.save()   
+              return JsonResponse(
+                {
+                   "message":"done"
+                }
+               )
+        else:
+          return JsonResponse({
             "message":"Error"
         })
 
@@ -1110,7 +1130,7 @@ class getuser_pathdatashare(generics.ListCreateAPIView):
     authentication_classes = [TokenAuthentication] 
     serializer_class = PatientpathologyDatashareSerializer
     def get(self, request, *args, **kwargs):   
-        queryset=PathologyDatashare.objects.filter(user=self.request.user,current=True,)
+        queryset=PathologyDatashare.objects.filter(user=self.request.user,current=True)
         serializer =PatientpathologyDatashareSerializer(queryset, many=True)
         return JsonResponse({"DoctorDatashare":serializer.data}, safe=False)
     
@@ -1207,7 +1227,16 @@ class getpath_datashare(generics.ListCreateAPIView):
     serializer_class = pathDatashareSerializer
     def get(self, request, *args, **kwargs):
         data = Pathologist.objects.get(user=self.request.user) 
-        queryset =PathologyDatashare.objects.filter(Doctor=data,complete=True) 
+        queryset =PathologyDatashare.objects.filter(pathologist=data,complete=False) 
+        serializer =uppathDatashareSerializer(queryset, many=True)
+        return JsonResponse({"PathologyDatashare":serializer.data}, safe=False)
+    
+class getcompletedpathdatashare(generics.ListCreateAPIView):
+    permission_classes=[IsAuthenticated]
+    authentication_classes = [TokenAuthentication] 
+    def get(self, request, *args, **kwargs):
+        data = Pathologist.objects.get(user=self.request.user) 
+        queryset =PathologyDatashare.objects.filter(Doctor=data,paid=True,complete=True) 
         serializer =uppathDatashareSerializer(queryset, many=True)
         return JsonResponse({"PathologyDatashare":serializer.data}, safe=False)
     
