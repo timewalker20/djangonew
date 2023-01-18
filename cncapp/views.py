@@ -595,16 +595,11 @@ def fullregister(request):
     phone =request.data["phone"]
     username=request.data["username"]
     usertype=request.data["usertype"]
-    data=User.objects.create(
-         phone_no=phone,
-         username=username,
-         usertype=usertype
-     )
-    data.save()
-    Tempory.objects.filter(phone_no=phone).delete()
     user=User.objects.get(phone_no=phone)
-    token, created = Token.objects.get_or_create(user=user)
-    return Response({
+    if User.objects.filter(username=user).exists():
+        user=User.objects.get(phone_no=phone)
+        token, created = Token.objects.get_or_create(user=user)
+        return Response({
                'user':{
                'token': token.key,
                'user_id': user.pk,
@@ -613,6 +608,26 @@ def fullregister(request):
                'phone_no':user.phone_no if user.phone_no else '',
                }
               })
+    else:
+        data=User.objects.create(
+         phone_no=phone,
+         username=username,
+         usertype=usertype
+         )
+        data.save()
+        Tempory.objects.filter(phone_no=phone).delete()
+        user=User.objects.get(phone_no=phone)
+        token, created = Token.objects.get_or_create(user=user)
+        return Response({
+               'user':{
+               'token': token.key,
+               'user_id': user.pk,
+               'username':user.username,
+               'usertype':user.usertype,
+               'phone_no':user.phone_no if user.phone_no else '',
+               }
+              })
+    
 class AuthToken(generics.GenericAPIView):
     def post(self, request, *args, **kwargs):
         phone =request.data["phone"]
@@ -629,7 +644,6 @@ class AuthToken(generics.GenericAPIView):
                'usertype':user.usertype,
                'phone_no':user.phone_no if user.phone_no else '',
               })    
-
 class verifyOTP(APIView):
       def post(self,request):
         try:
