@@ -1291,7 +1291,7 @@ class hospList(generics.ListCreateAPIView):
     def get(self, request, *args, **kwargs):   
         queryset=Hospital.objects.all()
         serializer =hospitalSerializer(queryset, many=True)
-        return JsonResponse({"Pathologists":serializer.data}, safe=False)
+        return JsonResponse({"Hospitals":serializer.data}, safe=False)
 
 class hospDetail(generics.RetrieveUpdateDestroyAPIView):
     # permission_classes=[IsAuthenticated]
@@ -1304,7 +1304,7 @@ class Ambulancelist(generics.ListCreateAPIView):
     def get(self, request, *args, **kwargs):   
         queryset=Ambulance.objects.all()
         serializer =AmbulanceSerializer(queryset, many=True)
-        return JsonResponse({"Pathologists":serializer.data}, safe=False)
+        return JsonResponse({"Ambulances":serializer.data}, safe=False)
 
 class Ambulancedetail(generics.RetrieveUpdateDestroyAPIView):
     # permission_classes=[IsAuthenticated]
