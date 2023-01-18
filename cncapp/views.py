@@ -962,7 +962,7 @@ class getuserdocdatashare(generics.ListCreateAPIView):
     permission_classes=[IsAuthenticated]
     authentication_classes = [TokenAuthentication] 
     def get(self, request, *args, **kwargs):   
-        queryset=DocDatashare.objects.filter(user=self.request.user,current=True,paid=True)
+        queryset=DocDatashare.objects.filter(user=self.request.user,)
         serializer =PatientdocDatashareSerializer(queryset, many=True)
         return JsonResponse({"DoctorDatashare":serializer.data}, safe=False)
 
