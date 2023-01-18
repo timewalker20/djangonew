@@ -592,7 +592,7 @@ def phone_otp_verify_register(request):
 
 @api_view(['POST'])
 def fullregister(request):
-    phone =request.data["phone"]
+    phone=request.data["phone"]
     username=request.data["username"]
     usertype=request.data["usertype"]
     if User.objects.filter(phone_no=phone).exists():
@@ -979,6 +979,7 @@ class getuserdocdatashare(generics.ListCreateAPIView):
             prescription=request.data["prescription"]
             user=int(request.data["user"])
             doctor= int(request.data["Doctor"])
+
             appId="e0209d1f9cb942b39eff167125a12d7b"
             appCertificate="b0de03e09adf49f9a7ba80d85e78c4dd"
             channelName = full_name
@@ -1125,7 +1126,7 @@ class getuser_pathdatashare(generics.ListCreateAPIView):
             timeofshare=request.data["timeofshare"]
             prescription=request.data["prescription"]
             user=int(request.data["user"])
-            pathologist= int(request.data["Doctor"])
+            pathologist= int(request.data["pathologist"])
             appId="e0209d1f9cb942b39eff167125a12d7b"
             appCertificate="b0de03e09adf49f9a7ba80d85e78c4dd"
             channelName = full_name
