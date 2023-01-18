@@ -598,7 +598,6 @@ def fullregister(request):
     data=User.objects.create(
          phone_no=phone,
          username=username,
-         dob=dob,
          usertype=usertype
      )
     data.save()
