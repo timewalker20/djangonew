@@ -844,15 +844,6 @@ class getuserdatashare(generics.ListCreateAPIView):
         queryset = Datashare.objects.filter(user=self.request.user,complete=False)
         serializer =PatientDatashareSerializer(queryset, many=True)
         return JsonResponse({"HospitalDatashare":serializer.data}, safe=False)
-    
-class getuserdatashare_accepted(generics.ListCreateAPIView):
-    permission_classes=[IsAuthenticated]
-    authentication_classes = [TokenAuthentication] 
-    def get(self, request, *args, **kwargs):   
-        queryset = Datashare.objects.filter(user=self.request.user,accept=True)
-        serializer =PatientDatashareSerializer(queryset, many=True)
-        return JsonResponse({"HospitalDatashare":serializer.data}, safe=False)
-    
     def post(self, request, *args, **kwargs):
            full_name=request.data["full_name"]
            email= request.data["email"]
@@ -888,6 +879,16 @@ class getuserdatashare_accepted(generics.ListCreateAPIView):
                     "HospitalDatashare":serializer.data
                          }
              )
+    
+class getuserdatashare_accepted(generics.ListCreateAPIView):
+    permission_classes=[IsAuthenticated]
+    authentication_classes = [TokenAuthentication] 
+    def get(self, request, *args, **kwargs):   
+        queryset = Datashare.objects.filter(user=self.request.user,accept=True)
+        serializer =PatientDatashareSerializer(queryset, many=True)
+        return JsonResponse({"HospitalDatashare":serializer.data}, safe=False)
+    
+    
     
 class updategetuserdatashare(generics.RetrieveUpdateDestroyAPIView):
     permission_classes=[IsAuthenticated]
