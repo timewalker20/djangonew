@@ -595,8 +595,7 @@ def fullregister(request):
     phone =request.data["phone"]
     username=request.data["username"]
     usertype=request.data["usertype"]
-    user=User.objects.get(phone_no=phone)
-    if User.objects.filter(username=user).exists():
+    if User.objects.filter(phone_no=phone).exists():
         user=User.objects.get(phone_no=phone)
         token, created = Token.objects.get_or_create(user=user)
         return Response({
