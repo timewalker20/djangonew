@@ -1068,7 +1068,7 @@ class getdocdatashare(generics.ListCreateAPIView):
     authentication_classes = [TokenAuthentication] 
     def get(self, request, *args, **kwargs):
         data = Doctor.objects.get(user=self.request.user) 
-        queryset = DocDatashare.objects.filter(Doctor=data,paid=True,complete=False) 
+        queryset = DocDatashare.objects.filter(Doctor=data,complete=False) 
         serializer =PatientdocDatashareSerializer(queryset, many=True)
         return JsonResponse({"DocDatashare":serializer.data}, safe=False)
     
@@ -1207,7 +1207,7 @@ class getpath_datashare(generics.ListCreateAPIView):
     serializer_class = pathDatashareSerializer
     def get(self, request, *args, **kwargs):
         data = Pathologist.objects.get(user=self.request.user) 
-        queryset =PathologyDatashare.objects.filter(Doctor=data,paid=True,complete=True) 
+        queryset =PathologyDatashare.objects.filter(Doctor=data,complete=True) 
         serializer =uppathDatashareSerializer(queryset, many=True)
         return JsonResponse({"PathologyDatashare":serializer.data}, safe=False)
     
