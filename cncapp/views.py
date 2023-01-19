@@ -626,15 +626,14 @@ def fullregister(request):
                'phone_no':user.phone_no if user.phone_no else '',
                }
               })
-    
+from rest_framework import status 
 class AuthToken(generics.GenericAPIView):
     def post(self, request, *args, **kwargs):
         phone =request.data["phone"]
         # otp=request.data['otp']
-        user=User.objects.get(phone_no=phone)
-        print(user)
-        if User.objects.filter(username=user).exists():
+        if User.objects.filter(phone_no=phone).exists():
         #    if User.objects.filter(otp=otp).exists():
+              user=User.objects.get(phone_no=phone)
               token, created = Token.objects.get_or_create(user=user)
               return Response({
                'token': token.key,
@@ -642,7 +641,10 @@ class AuthToken(generics.GenericAPIView):
                'username':user.username,
                'usertype':user.usertype,
                'phone_no':user.phone_no if user.phone_no else '',
-              })    
+              }) 
+        else:
+             return Response(status=status.HTTP_510_NOT_EXTENDED) 
+
 class verifyOTP(APIView):
       def post(self,request):
         try:
