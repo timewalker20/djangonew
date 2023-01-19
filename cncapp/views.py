@@ -442,6 +442,7 @@ def start_payment_Pathology(request):
                                  date=date,
                                  start_time=start_time,
                                  booking_payment_id=0
+
                                  )
      order.save()
      serializer =PathbookingSerializer(order)
@@ -626,6 +627,7 @@ def fullregister(request):
                'phone_no':user.phone_no if user.phone_no else '',
                }
               })
+    
 from rest_framework import status 
 class AuthToken(generics.GenericAPIView):
     def post(self, request, *args, **kwargs):
@@ -860,6 +862,8 @@ class getuserdatashare(generics.ListCreateAPIView):
            time=request.data["time"]
            user=int(request.data["user"])
            hospital=int(request.data["hospital"])
+           longitude=request.data["longitude"]
+           latitude=request.data["latitude"]
            order = Datashare.objects.create( 
                                             hospital=Hospital.objects.get(id=hospital),   
                                             user=User.objects.get(id=user),
@@ -873,7 +877,9 @@ class getuserdatashare(generics.ListCreateAPIView):
                                             bloodgroup =bloodgroup,
                                             accept=accept,
                                             date=date,
-                                            time=time,                              
+                                            time=time,
+                                            longitude=longitude,
+                                            latitude=latitude                              
            )
            order.save()
            serializer =PatientDatashareSerializer(order)
@@ -982,7 +988,8 @@ class getuserdocdatashare(generics.ListCreateAPIView):
             prescription=request.data["prescription"]
             user=int(request.data["user"])
             doctor= int(request.data["Doctor"])
-
+            longitude=request.data["longitude"]
+            latitude=request.data["latitude"]
             appId="e0209d1f9cb942b39eff167125a12d7b"
             appCertificate="b0de03e09adf49f9a7ba80d85e78c4dd"
             channelName = full_name
@@ -1011,7 +1018,9 @@ class getuserdocdatashare(generics.ListCreateAPIView):
                                             timeofshare= timeofshare,
                                             rtc= RtcTokenBuilder.buildTokenWithUid(appId, appCertificate, channelName, uid, role, privilegeExpiredTs),
                                             uid=uid,
-                                            channelName=full_name
+                                            channelName=full_name,
+                                            longitude=longitude,
+                                            latitude=latitude           
                                  )
               order.save()
               serializer =PatientdocDatashareSerializer(order)
@@ -1040,7 +1049,9 @@ class getuserdocdatashare(generics.ListCreateAPIView):
                                             timeofshare= timeofshare,
                                             rtc= RtcTokenBuilder.buildTokenWithUid(appId, appCertificate, channelName, uid, role, privilegeExpiredTs),
                                             uid=uid,
-                                            channelName=full_name
+                                            channelName=full_name,
+                                            longitude=longitude,
+                                            latitude=latitude
                                  )
                 order.save()
                 serializer =PatientdocDatashareSerializer(order)
@@ -1106,6 +1117,7 @@ def completedatashare(request):
 #         return JsonResponse({
 #             "message":"Error"
 #         })
+
 class DoctorPayment(generics.ListCreateAPIView):
     permission_classes=[IsAuthenticated]
     authentication_classes = [TokenAuthentication]
@@ -1216,7 +1228,7 @@ class getuser_pathdatashare(generics.ListCreateAPIView):
                     "PathologyDatashare":serializer.data
                          }
                 )
-            
+           
 class updateuser_pathdatashare(generics.RetrieveUpdateDestroyAPIView):
     permission_classes=[IsAuthenticated]
     authentication_classes = [TokenAuthentication] 
@@ -1258,7 +1270,7 @@ def PathologistPayment(request):
         {
          "message":"done"
         }
-     )
+    )
     else:
         return JsonResponse({
             "message":"Error"
@@ -1266,11 +1278,6 @@ def PathologistPayment(request):
 
 
 
-
-
-
-
-        
 #global data
 
 class PharmaList(generics.ListCreateAPIView): 
