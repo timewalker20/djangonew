@@ -904,7 +904,7 @@ def accept(request):
         accept=request.data.get('accept')
         pk=request.data.get('pk')
         if accept == True:
-            data=Datashare.objects.filter(id=pk).update(accept=True,complete=True)
+            Datashare.objects.filter(id=pk).update(accept=True,complete=True)
             return Response({
                 'message':'Your booking is Accepted'
             })

@@ -68,18 +68,20 @@ class Doctor(models.Model):
     speciality = models.CharField(max_length=20,blank=False)
     gender = models.CharField(max_length=10,blank=False,default="0")
     amount= models.FloatField(blank=False,default=0.0,null=True)
+    longitude=models.FloatField(blank=False,default=0,null=True)
+    latitude=models.FloatField(blank=False,default=0,null=True)
     
     def __str__(self):
         return self.full_name
 
 class Pathologist(models.Model):
-    user = models.OneToOneField(User,on_delete=models.CASCADE,null=True)
+    user = models.OneToOneField(User,on_delete=models.CASCADE,unique=False,null=True)
     full_name= models.CharField(max_length=300,default="0")
-    email = models.EmailField(max_length=300,unique=True)
+    email = models.EmailField(max_length=300,)
     desc = models.TextField(max_length=400,blank=False,null=True)
     services= models.TextField(max_length=400,blank=False,null=True)
     pathologistimage = models.ImageField(blank=True, upload_to='pathologist_pics',null=True)
-    contactno = models.CharField(max_length=13,default="0",unique=True)
+    contactno = models.CharField(max_length=13,default="0",)
     address=models.CharField(max_length=200,blank=False,null=True)
     city = models.CharField(max_length=20,default="0")
     pincode = models.CharField(max_length = 6,default="0")
@@ -87,7 +89,8 @@ class Pathologist(models.Model):
     speciality = models.CharField(max_length=20,blank=False)
     gender = models.CharField(max_length=10,blank=False,default="0")
     amount= models.FloatField(blank=False,default=0.0,null=True)
-    
+    longitude=models.FloatField(blank=False,default=0.0,null=True)
+    latitude=models.FloatField(blank=False,default=0,null=True)
     def __str__(self):
         return self.full_name
 
@@ -115,7 +118,8 @@ class Hospital(models.Model):
     administratorname = models.CharField(max_length=100,blank=False,unique=True)
     facilities = models.TextField(max_length=400,blank=False,null=True)
     amount= models.FloatField(blank=False,default=0.0,null=True)
-
+    longitude=models.FloatField(blank=False,default=0.0,null=True)
+    latitude=models.FloatField(blank=False,default=0,null=True)
     def __str__(self):
         return self.hospitalname
 
@@ -131,7 +135,8 @@ class Pharmacist(models.Model):
      pincode = models.CharField(max_length = 10,default="0")
      start_time = models.TimeField(default=0)
      end_time= models.TimeField(default=0)
-    
+     longitude=models.FloatField(blank=False,default=0.0,null=True)
+     latitude=models.FloatField(blank=False,default=0,null=True)
      def __str__(self):
          return self.shop_name
 
@@ -169,6 +174,8 @@ class Ambulance(models.Model):
     address=models.CharField(max_length=200,blank=False,null=True)
     pincode = models.CharField(max_length = 10)
     amount= models.FloatField(blank=False,default=0.0,null=True)
+    longitude=models.FloatField(blank=False,default=0.0,null=True)
+    latitude=models.FloatField(blank=False,default=0,null=True)
     def __str__(self):
         return self.company
 
@@ -193,6 +200,9 @@ class PathologyDatashare(models.Model):
     channelName=models.CharField(max_length=50,default=" ")
     paid=models.BooleanField(default=False)
     current=models.BooleanField(default=True)
+    longitude=models.FloatField(blank=False,default=0.0,null=True)
+    latitude=models.FloatField(blank=False,default=0,null=True)
+    # prescription_photo=models.ImageField(blank=True,upload_to='prescription_image',null=True)
     def __str__(self):
         return self.full_name
 
@@ -213,6 +223,8 @@ class Datashare(models.Model):
     date=models.CharField(max_length=50,default="0")
     complete=models.BooleanField(default=False)
     current=models.BooleanField(default=True)
+    longitude=models.FloatField(blank=False,default=0.0,null=True)
+    latitude=models.FloatField(blank=False,default=0,null=True)
     
     def __str__(self):
         return self.full_name
@@ -251,12 +263,16 @@ class DocDatashare(models.Model):
     accept= models.BooleanField(default=False)
     timeofshare= models.CharField(max_length=50,default="0")
     prescription=models.TextField(null=True)
+    prescription_photo=models.ImageField(blank=True,upload_to='prescription_image',null=True)
     rtc=models.TextField(null=True)
     uid=models.IntegerField(default = 0)
     complete=models.BooleanField(default=False)
     channelName=models.CharField(max_length=50,default=" ")
     paid=models.BooleanField(default=False)
     current=models.BooleanField(default=True)
+    start=models.BooleanField(default=False)
+    longitude=models.FloatField(blank=False,default=0.0,null=True)
+    latitude=models.FloatField(blank=False,default=0,null=True)
     def __str__(self):
         return self.full_name
 
